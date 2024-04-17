@@ -42,8 +42,8 @@ const resizeAndCompressImage = async (req, res, next) => {
 
   try {
     req.file.buffer = await sharp(req.file.buffer)
-      .resize({ width: 800 }) // Redimensionner l'image à une largeur maximale de 800 pixels
-      .jpeg({ quality: 90 }) // Compresser l'image au format JPEG avec une qualité de 90%
+      .resize({ width: 800 })
+      .jpeg({ quality: 90 })
       .toBuffer();
 
     next();

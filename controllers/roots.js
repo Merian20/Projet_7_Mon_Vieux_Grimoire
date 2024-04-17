@@ -21,26 +21,21 @@ const fs = require('fs');
 // };
 exports.createBookSchema = (req, res, next) => {
     try {
-        // Récupérer les données du livre depuis le corps de la requête
         const booksSchemaObject = JSON.parse(req.body.book);
 
-        // Supprimer les propriétés indésirables du livre
         delete booksSchemaObject._id;
         delete booksSchemaObject._userId;
 
-        // Créer une nouvelle instance du livre en utilisant les données fournies
         const book = new Book({
             ...booksSchemaObject,
-            userId: req.auth.user, // Utiliser l'userId de l'utilisateur authentifié
+            userId: req.auth.user,
             imageUrl: `${req.protocol}://${req.get('host')}/images/${req.file.filename}`
         });
 
-        // Sauvegarder le livre dans la base de données
         book.save()
             .then(() => res.status(201).json({ message: 'Objet enregistré !' }))
             .catch(error => res.status(400).json({ error }));
     } catch (error) {
-        // Capturer et gérer les erreurs liées à l'analyse JSON
         res.status(400).json({ error: error.message });
     }
 };
