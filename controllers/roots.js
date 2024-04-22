@@ -2,44 +2,24 @@ const BooksSchema = require('./../models/books');
 const Book = require ('./../models/books.js');
 const fs = require('fs');
 
-// exports.createBookSchema = (req, res, next) => {
-//     const booksSchemaObject = JSON.parse(req.body.book);
-//     delete booksSchemaObject._id;
-//     delete booksSchemaObject._userId;
-//     const book = new Book({
-//         ...booksSchemaObject,
-//         userId: req.auth.user,
-//         imageUrl: `${req.protocol}://${req.get('host')}/images/${req.file.filename}`
-//     });
-//     book.save()
-//         .then(() => res.status(201).json({
-//             message: 'Objet enregistré !'
-//         }))
-//         .catch(error => res.status(400).json({
-//             error
-//         }));
-// };
 exports.createBookSchema = (req, res, next) => {
-    try {
-        const booksSchemaObject = JSON.parse(req.body.book);
-
-        delete booksSchemaObject._id;
-        delete booksSchemaObject._userId;
-
-        const book = new Book({
-            ...booksSchemaObject,
-            userId: req.auth.user,
-            imageUrl: `${req.protocol}://${req.get('host')}/images/${req.file.filename}`
-        });
-
-        book.save()
-            .then(() => res.status(201).json({ message: 'Objet enregistré !' }))
-            .catch(error => res.status(400).json({ error }));
-    } catch (error) {
-        res.status(400).json({ error: error.message });
-    }
-};
-
+    const booksSchemaObject = JSON.parse(req.body.book);
+    delete booksSchemaObject._id;
+    delete booksSchemaObject._userId;
+    const userId = req.auth.userId;
+    const book = new Book({
+        ...booksSchemaObject,
+        userId: userId,
+        imageUrl: `${req.protocol}://${req.get('host')}/images/${req.file.filename}`
+    });
+    book.save()
+        .then(() => res.status(201).json({
+            message: 'Objet enregistré !'
+        }))
+        .catch(error => res.status(400).json({
+            error
+        }));
+}
 
 exports.modifyBookSchema = (req, res, next) => {
     const bookObject = req.file ? {
@@ -155,11 +135,9 @@ exports.rateBook = (req, res, next) => {
     const { userId, rating } = req.body;
     const bookId = req.params.id;
 
-
     if (rating < 0 || rating > 5) {
         return res.status(400).json({ error: 'La note doit être comprise entre 0 et 5.' });
     }
-
 
     Book.findById(bookId)
         .then(book => {
@@ -167,20 +145,16 @@ exports.rateBook = (req, res, next) => {
                 return res.status(404).json({ error: 'Livre non trouvé.' });
             }
 
-            
             const userRatingIndex = book.rating.findIndex(r => r.userId === userId);
             if (userRatingIndex !== -1) {
                 return res.status(400).json({ error: "Vous avez déjà noté ce livre." });
             }
 
-            
             book.rating.push({ userId, grade: rating });
 
-            
             const totalRating = book.rating.reduce((acc, cur) => acc + cur.grade, 0);
             book.averageRating = totalRating / book.rating.length;
 
-            
             book.save()
                 .then(updatedBook => {
                     res.status(200).json(updatedBook);
