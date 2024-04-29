@@ -25,8 +25,8 @@ router.post('/:id/rating', auth, booksCtrl.rateBook);
 router.post('/', auth, upload, resizeAndCompressImage, booksCtrl.createBookSchema);
 router.put('/:id', auth, upload, booksCtrl.modifyBookSchema);
 router.delete('/:id', auth, booksCtrl.deleteBookSchema);
+router.get('/bestrating', booksCtrl.getBestRatedBooks);
 router.get('/:id', upload, booksCtrl.getOneBookSchema);
 router.get('/', booksCtrl.getAllBooksSchema);
-router.get('/bestrating', booksCtrl.getBestRatedBooks);
 
 module.exports = router;

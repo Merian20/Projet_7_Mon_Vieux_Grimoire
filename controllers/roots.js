@@ -98,6 +98,7 @@ exports.deleteBookSchema = (req, res, next) => {
 };
 
 exports.getOneBookSchema = (req, res, next) => {
+    console.log(req.params.id);
     BooksSchema.findOne({
             _id: req.params.id
         })
@@ -116,7 +117,7 @@ exports.getAllBooksSchema = (req, res, next) => {
 }
 
 exports.getBestRatedBooks = (req, res, next) => {
-        console.log(getBestRatedBooks);
+        console.log('toto');
     BooksSchema.aggregate([
         {
             $project: {
@@ -150,15 +151,15 @@ exports.rateBook = (req, res, next) => {
                 return res.status(404).json({ error: 'Livre non trouvé.' });
             }
 
-            const userRatingIndex = book.rating.findIndex(r => r.userId === userId);
+            const userRatingIndex = book.ratings.findIndex(r => r.userId === userId);
             if (userRatingIndex !== -1) {
                 return res.status(400).json({ error: "Vous avez déjà noté ce livre." });
             }
 
-            book.rating.push({ userId, grade: rating });
+            book.ratings.push({ userId, grade: rating });
 
-            const totalRating = book.rating.reduce((acc, cur) => acc + cur.grade, 0);
-            book.averageRating = totalRating / book.rating.length;
+            const totalRating = book.ratings.reduce((acc, cur) => acc + cur.grade, 0);
+            book.averageRating = totalRating / book.ratings.length;
 
             book.save()
                 .then(updatedBook => {
@@ -166,5 +167,8 @@ exports.rateBook = (req, res, next) => {
                 })
                 .catch(error => res.status(500).json({ error }));
         })
-        .catch(error => res.status(500).json({ error }));
+        .catch(error => {
+            console.log(error)
+            res.status(500).json({ error })})
+        
 };
