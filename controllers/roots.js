@@ -7,14 +7,18 @@ exports.createBookSchema = (req, res, next) => {
     delete booksSchemaObject._id;
     delete booksSchemaObject._userId;
     const userId = req.auth.userId;
+    //console.log('Chemin de l\'image :', `${req.protocol}://${req.get('host')}/images/${req.file.filename}`);
     const book = new Book({
         ...booksSchemaObject,
         userId: userId,
         imageUrl: `${req.protocol}://${req.get('host')}/images/${req.file.filename}`
     });
+    // console.log("req.protocol:", req.protocol);
+    // console.log("req.get('host'):", req.get('host'));
+    // console.log("req.file.filename:", req.file.filename);
     book.save()
         .then(() => res.status(201).json({
-            message: 'Objet enregistré !'
+            message: 'Livre enregistré !'
         }))
         .catch(error => res.status(400).json({
             error
@@ -46,7 +50,7 @@ exports.modifyBookSchema = (req, res, next) => {
                         _id: req.params.id
                     })
                     .then(() => res.status(200).json({
-                        message: 'Objet modifié!'
+                        message: 'Livre modifié!'
                     }))
                     .catch(error => res.status(401).json({
                         error
@@ -77,7 +81,7 @@ exports.deleteBookSchema = (req, res, next) => {
                         })
                         .then(() => {
                             res.status(200).json({
-                                message: 'Objet supprimé !'
+                                message: 'Livre supprimé !'
                             })
                         })
                         .catch(error => res.status(401).json({
@@ -112,6 +116,7 @@ exports.getAllBooksSchema = (req, res, next) => {
 }
 
 exports.getBestRatedBooks = (req, res, next) => {
+        console.log(getBestRatedBooks);
     BooksSchema.aggregate([
         {
             $project: {
