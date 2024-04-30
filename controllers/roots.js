@@ -1,5 +1,5 @@
 const BooksSchema = require('./../models/books');
-const Book = require ('./../models/books.js');
+const Book = require('./../models/books.js');
 const fs = require('fs');
 
 exports.createBookSchema = (req, res, next) => {
@@ -7,15 +7,13 @@ exports.createBookSchema = (req, res, next) => {
     delete booksSchemaObject._id;
     delete booksSchemaObject._userId;
     const userId = req.auth.userId;
-    //console.log('Chemin de l\'image :', `${req.protocol}://${req.get('host')}/images/${req.file.filename}`);
+
     const book = new Book({
         ...booksSchemaObject,
         userId: userId,
         imageUrl: `${req.protocol}://${req.get('host')}/images/${req.file.filename}`
     });
-    // console.log("req.protocol:", req.protocol);
-    // console.log("req.get('host'):", req.get('host'));
-    // console.log("req.file.filename:", req.file.filename);
+
     book.save()
         .then(() => res.status(201).json({
             message: 'Livre enregistré !'
@@ -116,47 +114,68 @@ exports.getAllBooksSchema = (req, res, next) => {
         }));
 }
 
-exports.getBestRatedBooks = (req, res, next) => {
-        console.log('toto');
-    BooksSchema.aggregate([
-        {
-            $project: {
-                _id: 1,
-                title: 1,
-                averageRating: { $avg: "$ratings" }
+exports.getBestRatedBooks = async (req, res, next) => {
+    try {
+        const bestRatedBooks = await Book.aggregate([{
+                $match: {} // Matchez tous les livres
+            },
+            {
+                $addFields: {
+                    averageRating: {
+                        $avg: "$ratings.grade"
+                    } // Calcul de la moyenne des notations
+                }
+            },
+            {
+                $sort: {
+                    averageRating: -1
+                } // Triez par note moyenne décroissante
+            },
+            {
+                $limit: 3 // Limitez à 3 livres
             }
-        },
-        {
-            $sort: { averageRating: -1 }
-        },
-        {
-            $limit: 3
-        }
-    ])
-    .then(bestRatedBooks => res.status(200).json(bestRatedBooks))
-    .catch(error => res.status(500).json({ error }));
+        ]);
+
+        res.status(200).json(bestRatedBooks);
+    } catch (error) {
+        res.status(500).json({
+            error: error.message
+        });
+    }
 };
 
 exports.rateBook = (req, res, next) => {
-    const { userId, rating } = req.body;
+    const {
+        userId,
+        rating
+    } = req.body;
     const bookId = req.params.id;
 
     if (rating < 0 || rating > 5) {
-        return res.status(400).json({ error: 'La note doit être comprise entre 0 et 5.' });
+        return res.status(400).json({
+            error: 'La note doit être comprise entre 0 et 5.'
+        });
     }
 
     Book.findById(bookId)
         .then(book => {
             if (!book) {
-                return res.status(404).json({ error: 'Livre non trouvé.' });
+                return res.status(404).json({
+                    error: 'Livre non trouvé.'
+                });
             }
 
             const userRatingIndex = book.ratings.findIndex(r => r.userId === userId);
             if (userRatingIndex !== -1) {
-                return res.status(400).json({ error: "Vous avez déjà noté ce livre." });
+                return res.status(400).json({
+                    error: "Vous avez déjà noté ce livre."
+                });
             }
 
-            book.ratings.push({ userId, grade: rating });
+            book.ratings.push({
+                userId,
+                grade: rating
+            });
 
             const totalRating = book.ratings.reduce((acc, cur) => acc + cur.grade, 0);
             book.averageRating = totalRating / book.ratings.length;
@@ -165,10 +184,14 @@ exports.rateBook = (req, res, next) => {
                 .then(updatedBook => {
                     res.status(200).json(updatedBook);
                 })
-                .catch(error => res.status(500).json({ error }));
+                .catch(error => res.status(500).json({
+                    error
+                }));
         })
         .catch(error => {
             console.log(error)
-            res.status(500).json({ error })})
-        
+            res.status(500).json({
+                error
+            })
+        })
 };
